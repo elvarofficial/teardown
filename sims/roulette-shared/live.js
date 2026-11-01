@@ -29,6 +29,11 @@ const VIEWS = {
 };
 const fmt = (x, d = 2) => (Number.isFinite(x) ? x.toFixed(d) : '-');
 
+// phones get a stacked page instead of the scaled console, whose text would be a third of its size
+const PHONE = '@media (max-width:820px),(max-height:500px)';
+const PHONE_WIDE = '@media (max-height:500px) and (orientation:landscape)';
+const phoneQuery = matchMedia(PHONE.replace('@media ', ''));
+
 const CSS = `
 html,body{background:#e9e2d6;overflow:hidden;margin:0}
 #app{position:absolute!important;inset:auto!important;left:0;top:0;width:${W}px;height:${H}px;transform-origin:0 0;font-family:Inter,sans-serif;color:#2b2620;font-size:13px}
@@ -119,8 +124,47 @@ table.bom td b{font-weight:600}
 .toast i{width:7px;height:7px;border-radius:50%;background:${ACCENT}}
 .toast.tour i{animation:blink 1.2s steps(2) infinite}
 @keyframes blink{50%{opacity:.15}}
-.turn{position:fixed;left:0;right:0;bottom:18px;text-align:center;font:600 12px Inter,sans-serif;color:#6d6454;display:none}
-@media (orientation:portrait) and (max-width:820px){.turn{display:block}}
+.wheelbox,.under{display:contents}
+${PHONE}{
+html,body{position:fixed;inset:0;width:100%;height:100%}
+#app{position:fixed!important;inset:0!important;width:auto;height:auto;transform:none!important;display:flex;flex-direction:column}
+.wheelbox{display:block;position:relative;flex:none;height:46dvh;background:#e9e2d6;overflow:hidden}
+.under{display:block;flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;border-top:1px solid #cfc6b4}
+.pane{position:static!important;width:auto!important;height:auto!important;border-left:0!important;border-right:0!important}
+.head{flex:none;height:40px!important;padding:0 10px;gap:8px}
+.head span.lede{display:none}
+.head h1{font-size:14px}
+.chip{height:24px;padding:0 8px;font-size:10.5px;min-width:0;overflow:hidden}
+#gl{position:absolute!important;inset:0;width:100%;height:100%}
+.views{left:6px;top:6px;right:6px;flex-wrap:wrap}
+.views button{height:30px;padding:0 8px;font-size:11.5px}
+.number{right:8px;top:auto;bottom:8px;width:64px;height:64px;font-size:28px}
+.toast{left:8px;bottom:8px;right:80px;font-size:11px}
+.meter{left:8px;right:8px;top:44px;width:auto}
+.left{padding:10px 12px}
+.bottom{display:block;border-bottom:1px solid #cfc6b4}
+.live{border-right:0;grid-template-columns:1fr 1fr 1fr}
+.live .phase{grid-column:1/4}
+.histhead{white-space:normal;flex-wrap:wrap;gap:2px 8px}
+#hist{height:130px;flex:none}
+.rpane{display:block;min-height:70dvh}
+.tabs{position:sticky;top:0;background:#f3eee3;z-index:3}
+.tabs button{height:42px}
+.tools{position:static}
+.tabbody{overflow:visible}
+table.bom{font-size:11px}
+input,button.act{font-size:16px}
+button.act{height:44px}
+.ball{min-height:40px}
+.sk input[type=number]{height:30px;font-size:16px}
+.tools input{font-size:16px;height:32px}
+}
+${PHONE_WIDE}{
+#app{flex-flow:row wrap}
+.head{width:100%!important}
+.wheelbox{width:56vw;height:calc(100dvh - 40px)}
+.under{width:44vw;flex:none;height:calc(100dvh - 40px);border-top:0;border-left:1px solid #cfc6b4;box-sizing:border-box}
+}
 `;
 
 const el = (tag, cls, html) => {
@@ -176,10 +220,10 @@ export function runLive() {
   left.appendChild(ballGrid);
   const props = el('div', 'props');
   left.appendChild(props);
-  const throwBtn = el('button', 'act', 'Throw it by hand (T)');
+  const throwBtn = el('button', 'act', `Throw it by hand${phoneQuery.matches ? '' : ' (T)'}`);
   throwBtn.onclick = () => startAim();
   left.appendChild(throwBtn);
-  const spinBtn = el('button', 'act alt', 'Repeat this toss (space)');
+  const spinBtn = el('button', 'act alt', `Repeat this toss${phoneQuery.matches ? '' : ' (space)'}`);
   spinBtn.onclick = () => spin();
   left.appendChild(spinBtn);
   left.appendChild(el('div', 'h', 'The toss'));
@@ -377,8 +421,12 @@ export function runLive() {
   app.appendChild(numberEl);
   const toast = el('div', 'toast', '<i></i><span></span>');
   app.appendChild(toast);
-  const turn = el('div', 'turn', 'Turn your phone sideways for the full console');
-  document.body.appendChild(turn);
+  // two boxes that mean nothing on a desktop, and on a phone hold the wheel and the scrolling panels
+  const wheelBox = el('div', 'wheelbox');
+  const under = el('div', 'under');
+  wheelBox.append(canvas, ...[...app.querySelectorAll(':scope > .views, :scope > .number, :scope > .toast, :scope > .meter')]);
+  under.append(...[...app.querySelectorAll(':scope > .left, :scope > .bottom, :scope > .rpane')]);
+  app.append(wheelBox, under);
 
   // ------------------------------------------------------------ the spin picker: a ball you hit off-centre
   const spinCanvas = spinRow.querySelector('canvas');
@@ -449,8 +497,17 @@ export function runLive() {
   // ------------------------------------------------------------ fit
   let scale = 1;
   const fit = () => {
-    scale = Math.min(innerWidth / W, innerHeight / H);
-    app.style.transform = `translate(${(innerWidth - W * scale) / 2}px, ${(innerHeight - H * scale) / 2}px) scale(${scale})`;
+    if (phoneQuery.matches) {
+      scale = 1;
+      st.resize(canvas.clientWidth, canvas.clientHeight, Math.min(2, devicePixelRatio || 1));
+      drawHist();
+      return;
+    }
+    // clientWidth, not innerWidth: a phone browser grows innerWidth to fit a wide page, and the page would never shrink
+    const vw = document.documentElement.clientWidth;
+    const vh = document.documentElement.clientHeight;
+    scale = Math.min(vw / W, vh / H);
+    app.style.transform = `translate(${(vw - W * scale) / 2}px, ${(vh - H * scale) / 2}px) scale(${scale})`;
     st.resize(W - LEFT - RIGHT, H - TOP - BOTTOM, Math.min(2, Math.max(0.75, (devicePixelRatio || 1) * scale)));
     drawHist();
   };
@@ -507,7 +564,7 @@ export function runLive() {
   // Pick the ball up, and it follows the pointer round the groove. Press and flick along the track: the pointer's real speed
   // over the wheel, measured over the last tenth of a second, is the ball's speed at release. So the hand sets all of it.
   const meter = el('div', 'meter', `<span></span> <b></b><div class="bar"><div class="zone"></div><div class="fill"></div></div>`);
-  app.appendChild(meter);
+  wheelBox.appendChild(meter);
   let aiming = false;
   let grabbed = false;
   let trace = [];
@@ -647,13 +704,14 @@ export function runLive() {
   };
   function drawHist() {
     const c = histCanvas;
-    const cssW = W - LEFT - RIGHT - 262 - 24;
-    const cssH = BOTTOM - 44;
+    const phone = phoneQuery.matches;
+    const cssW = phone ? c.clientWidth : W - LEFT - RIGHT - 262 - 24;
+    const cssH = phone ? c.clientHeight : BOTTOM - 44;
     const pr = Math.min(2, (devicePixelRatio || 1) * scale);
-    if (c.width !== Math.round(cssW * pr)) {
+    if (c.width !== Math.round(cssW * pr) || c.height !== Math.round(cssH * pr)) {
       c.width = Math.round(cssW * pr);
       c.height = Math.round(cssH * pr);
-      c.style.height = `${cssH}px`;
+      if (!phone) c.style.height = `${cssH}px`;
     }
     const x = c.getContext('2d');
     x.setTransform(pr, 0, 0, pr, 0, 0);
@@ -835,7 +893,9 @@ export function runLive() {
       }
     }
     toast.classList.toggle('tour', idle);
-    toast.querySelector('span').textContent = idle ? 'Touring. Click or press a key to take over.' : aiming ? 'Press T again to re-grip, Esc to let the panel throw.' : 'Drag to orbit, wheel to zoom, T to throw, space to repeat.';
+    toast.querySelector('span').textContent = phoneQuery.matches
+      ? (idle ? 'Touring. Tap to take over.' : aiming ? 'Flick along the track, or Repeat to let the panel throw.' : 'Drag to orbit. Throw and Repeat are below.')
+      : idle ? 'Touring. Click or press a key to take over.' : aiming ? 'Press T again to re-grip, Esc to let the panel throw.' : 'Drag to orbit, wheel to zoom, T to throw, space to repeat.';
 
     const target = VIEWS[view];
     const bp = st.ballPosition();
@@ -885,6 +945,11 @@ export function runLive() {
   };
 
   addEventListener('resize', fit);
+  phoneQuery.addEventListener('change', () => {
+    app.style.transform = '';
+    histCanvas.style.height = '';
+    fit();
+  });
   rebuild();
   fit();
   requestAnimationFrame(frame);
