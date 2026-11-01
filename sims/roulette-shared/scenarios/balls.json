@@ -1,0 +1,14 @@
+{
+  "common": {"trials": 3000, "seed": 11},
+  "scenarios": [
+    {"name": "Elephant ivory", "presets": "ball.ivory"},
+    {"name": "Boxwood", "presets": "ball.boxwood"},
+    {"name": "Marble", "presets": "ball.marble"},
+    {"name": "Phenolic", "presets": "ball.phenolic"},
+    {"name": "Ivorine", "presets": "ball.ivorine"},
+    {"name": "Acrylic", "presets": "ball.acrylic"},
+    {"name": "Acetal", "presets": "ball.delrin"},
+    {"name": "PTFE", "presets": "ball.ptfe"},
+    {"name": "Alumina ceramic", "presets": "ball.ceramic"}
+  ]
+}

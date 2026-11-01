@@ -1,0 +1,20 @@
+{
+  "baseline": {"name": "As designed, PTFE", "trials": 8000, "seed": 21},
+  "common": {"trials": 8000, "seed": 21},
+  "scenarios": [
+    {"name": "Table tilted 0.2 deg", "deltas": {"table.tiltX": 0.2}},
+    {"name": "Table tilted 1 deg", "deltas": {"table.tiltX": 1}},
+    {"name": "One fret 1.5 mm high (next to 17)", "deltas": {"fret.17.height": 1.5}},
+    {"name": "One fret loose, -40% restitution (next to 17)", "deltas": {"fret.17.cor": -40}},
+    {"name": "One pocket floor soft, -50% restitution (17)", "deltas": {"pocket.17.cor": -50}},
+    {"name": "One pocket 2 mm deep (17)", "deltas": {"pocket.17.depth": 2}},
+    {"name": "One fret shifted 0.5 deg (next to 17)", "deltas": {"fret.17.angle": 0.5}},
+    {"name": "Rotor wobble 0.3 deg", "deltas": {"rotor.wobbleCos": 0.3}},
+    {"name": "Rotor run-out 1 mm", "deltas": {"rotor.eccCos": 1}},
+    {"name": "Rotor imbalance 3 g m, table tilted 0.5 deg", "deltas": {"rotor.imbalanceCos": 3, "table.tiltX": 0.5}},
+    {"name": "Bowl 1 mm oval", "deltas": {"bowl.ovalCos": 1}},
+    {"name": "Ball centre of mass 0.5 mm off", "deltas": {"ball.comOffset": 0.5}},
+    {"name": "Rotor phase known at launch, level", "inputs": {"rotor.phase": {"dist": "fixed", "value": 0}, "launch.az": {"dist": "fixed", "value": 0}, "launch.speed": {"dist": "normal", "mean": 2.5, "sd": 0.02}}},
+    {"name": "Rotor phase known at launch, tilted 0.5 deg", "deltas": {"table.tiltX": 0.5}, "inputs": {"rotor.phase": {"dist": "fixed", "value": 0}, "launch.az": {"dist": "fixed", "value": 0}, "launch.speed": {"dist": "normal", "mean": 2.5, "sd": 0.02}}}
+  ]
+}

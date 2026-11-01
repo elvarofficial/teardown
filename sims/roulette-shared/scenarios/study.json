@@ -1,0 +1,16 @@
+{
+  "select": ["table.*", "air.*", "bowl.*", "spindle.*", "rotor.*", "ball.*", "surface.*", "material.*", "fret.17.*", "pocket.17.*", "deflector.1.*", "deflector.2.*"],
+  "k": 3,
+  "seed": 101,
+  "probeTrials": 200,
+  "budgetMinutes": 45,
+  "minTrials": 2000,
+  "maxTrials": 40000,
+  "shortlist": 14,
+  "always": ["fret.17.height", "fret.17.cor", "pocket.17.cor", "pocket.17.depth", "table.tiltX", "rotor.wobbleCos"],
+  "doseIds": ["fret.17.height", "fret.17.cor", "pocket.17.cor", "pocket.17.depth"],
+  "doses": [10, 30],
+  "couplingIds": ["table.tiltX", "spindle.tiltX", "rotor.wobbleCos", "rotor.imbalanceCos"],
+  "builds": 20,
+  "stackupSelect": ["table", "air", "bowl", "spindle", "rotor", "ball", "surface", "fret", "pocket", "deflector"]
+}
