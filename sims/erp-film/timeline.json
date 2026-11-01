@@ -1,0 +1,17 @@
+{
+  "duration": 24,
+  "camera": {
+    "open": 0,
+    "pos": 4.2,
+    "ecom": 8.2,
+    "field": 12.2,
+    "core": 16.2,
+    "tally": 20.2,
+    "outlet": 22.4
+  },
+  "events": {
+    "ecom_flush": [8, 20],
+    "field_sync": [13, 15.5],
+    "tally_import": 21
+  }
+}
