@@ -140,6 +140,18 @@ test('air drag decelerates a free ball at the Schiller-Naumann rate', () => {
   close((3 - v) / 0.05, a, a * 0.05, 'drag deceleration');
 });
 
+test('a raised release does not start buried in the wall', () => {
+  // the wall overhangs: a ball lifted straight up used to overlap it, and Hertz contact fired it out of the wheel
+  for (const lift of [0, 0.001, 0.003]) {
+    const w = buildWheel(ballPresetValues('boxwood'));
+    const sim = createSim(w);
+    sim.launch({speed: 2.5, az: 40, rotorPhase: 10, rotorSpeed: 2.6, rollFraction: 1, lift, inward: 0});
+    const e0 = sim.energy();
+    for (let i = 0; i < 2000; i++) sim.advance();
+    assert.ok(sim.energy() <= e0 * 1.001, `lift ${lift}: energy rose from ${e0} to ${sim.energy()}`);
+  }
+});
+
 const runSpin = (params, launch = {}, opts = {}) => {
   const w = buildWheel(params);
   const sim = createSim(w, opts);

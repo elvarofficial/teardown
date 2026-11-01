@@ -605,9 +605,12 @@ export function createSim(w, {plane = null, dtFine: dtFineIn, dtRoll: dtRollIn} 
       const zc = w.footZ + cz1;
       const a = (az * Math.PI) / 180;
       const ca = Math.cos(a), sa = Math.sin(a);
-      x = (rc - inward) * ca;
-      y = (rc - inward) * sa;
-      z = zc + 2e-4 + lift;
+      // the wall overhangs, so a raised ball must also start further in or it begins buried in the wall; `inward` counts from there
+      const rise = 2e-4 + lift;
+      const clear = Math.max(0, rise * Math.tan(w.lean));
+      x = (rc - clear - inward) * ca;
+      y = (rc - clear - inward) * sa;
+      z = zc + rise;
       vx = -direction * speed * sa + vr * ca;
       vy = direction * speed * ca + vr * sa;
       vz = vUp;
