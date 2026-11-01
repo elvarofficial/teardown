@@ -1,0 +1,6 @@
+{
+  "scenarios": [
+    {"name": "Boxwood, first replication", "presets": "ball.boxwood", "trials": 10000, "seed": 12},
+    {"name": "Boxwood, second replication", "presets": "ball.boxwood", "trials": 30000, "seed": 13}
+  ]
+}

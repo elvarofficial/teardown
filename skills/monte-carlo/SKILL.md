@@ -143,7 +143,8 @@ A model written in Python can use pint directly, with a thin JavaScript `trial` 
 
 - **Quote the detection limit.** "No effect" means nothing without the shift the run could have seen; the report gives it. To find a shift half as big takes four times the trials.
 - **Sweeps test many things.** Use `q`, the p-value corrected across all cases, not `p`. In 200 clean tests, ten will have p below 0.05 by chance.
-- **Pairing only works until the model goes chaotic.** Scenarios share launches, so early metrics compare trial by trial with enormous precision. A chaotic final outcome is effectively independent between two runs, so it gets no benefit.
+- **Pairing is worth what the churn leaves it.** Scenarios share launches, so early metrics compare trial by trial with enormous precision, and outcomes compare by a paired test (Stuart-Maxwell overall, exact McNemar per category). If a change moves most trials to a different category, the outcome gets almost no benefit. If it moves few, a small shift becomes visible. A two-sample test on paired arms is invalid, and it returns p near 1.
+- **A test against the null can miss what a paired test finds.** Read both, and use `smallestShift` as the limit. See `docs/TUNING.md`.
 - **A symmetry can hide a bias.** Ask what a parameter could possibly change before spending trials on it. See the roulette results in `docs/TUNING.md`.
 - **A model's assumptions are limits on the answer.** An `estimate` tolerance gives an estimated answer. Say which inputs were estimated, and which real measurement would most change the result.
 - **Trials cannot reveal a mechanism the model does not include.**
