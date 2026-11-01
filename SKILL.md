@@ -17,7 +17,7 @@ cd "$SKILL_DIR" && npm install && npx playwright install chromium
 
 The pages need nothing else. The video needs `ffmpeg` on PATH and the score needs Python 3 (standard library only). Set `FFMPEG`, `PYTHON` or `CHROMIUM` to point at other binaries.
 
-## The 3 examples
+## The 4 examples
 
 Build one, open the HTML, press buttons. Copy the closest one when you start a new machine.
 
@@ -26,12 +26,13 @@ Build one, open the HTML, press buttons. Copy the closest one when you start a n
 | `v8-*` | A cross-plane V8 with glass liners: the charge burns inside the cylinder you track, valves lift on their cams, 8 pistons move from the exact slider-crank. | Crank angle. Firing order 1-8-4-3-6-5-7-2, a chamber pressure model for the indicator diagram. | Cutaway modes (glass, section, solid), the firing order as a cylinder picker, live charts synced to the crank. |
 | `cessna-*` | The Cessna 337 main landing gear folding into the airframe on takeoff and dropping on landing. | Stroke 0..1: a 201 mm rack turns a 32-tooth pinion (module 4 mm) through exactly 180°. | One degree of freedom posing a whole mechanism, flight phases as functions of time, a runway that rolls under the model. |
 | `strandbeest-*` | Theo Jansen's Strandbeest, 20 legs on one crankshaft, walking broadside over sand. | Wind. The crank speed is integrated from it; every joint follows by circle intersection from Jansen's 11 link lengths. | An exact linkage solver in 67 lines, instanced tubes, foot traces, a contact chart of all 20 feet. |
+| `erp-*` | Four upstream systems (a till, a storefront, a ledger book, a phone) feeding one ERPNext plenum: each holds records in a buffer, flushes them down its own runner, and the core writes them to the Stock Ledger and the General Ledger. | The business clock. One film second is one business hour, so each source flushes on its own cadence: POS in real time, the storefront on the hour, Tally at 21:00, the phone when it finds signal. | A machine that is not a mechanism: buffers that fill and flush, records as packets in a pipe, a reject bin for what fails to map, and every gauge reading the same model that poses the parts. |
 
 Each comes in 3 folders: `<name>-shared/` holds the machine, `<name>-film/` the recorded tour, `<name>-live/` the page you drive.
 
 ```
 node "$SKILL_DIR/sims/build.mjs" v8-live          # → teardown-out/dist/v8-live.html, offline, ~800 KB
-node "$SKILL_DIR/sims/build.mjs"                  # all 6
+node "$SKILL_DIR/sims/build.mjs"                  # all 8
 ```
 
 ## How a machine is built
