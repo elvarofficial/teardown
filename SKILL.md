@@ -139,6 +139,10 @@ Checklist:
 - One accent, and it means something: the part that is working right now.
 - Nothing dead-still: one element always alive.
 
+## Monte Carlo
+
+To run a machine thousands of times with as-built tolerances, use the `monte-carlo` skill in `skills/monte-carlo/`. Keep the math free of three.js and its constants in arguments, as the "how a machine is built" table says, and it takes one small adapter file.
+
 ## Credits
 
 The kit, frame capture, sfx engine and review rules come from [whaleyxbt/claude-motion](https://github.com/whaleyxbt/claude-motion) (MIT). The recorded samples are CC0 from Freesound, trimmed by [Barty-Bart/motion-graphics](https://github.com/Barty-Bart/motion-graphics) (MIT); sources in `sfx/samples/SOURCES.md`.
