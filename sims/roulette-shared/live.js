@@ -32,7 +32,8 @@ const fmt = (x, d = 2) => (Number.isFinite(x) ? x.toFixed(d) : '-');
 // phones get a stacked page instead of the scaled console, whose text would be a third of its size
 const PHONE = '@media (max-width:820px),(max-height:500px)';
 const PHONE_WIDE = '@media (max-height:500px) and (orientation:landscape)';
-const phoneQuery = matchMedia(PHONE.replace('@media ', ''));
+// this module also loads inside the batch workers, which have no matchMedia
+const phoneQuery = globalThis.matchMedia?.(PHONE.replace('@media ', ''));
 
 const CSS = `
 html,body{background:#e9e2d6;overflow:hidden;margin:0}
