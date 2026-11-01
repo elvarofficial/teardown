@@ -17,6 +17,8 @@ cd "$SKILL_DIR" && npm install && npx playwright install chromium
 
 The pages need nothing else. The video needs `ffmpeg` on PATH and the score needs Python 3 (standard library only). Set `FFMPEG`, `PYTHON` or `CHROMIUM` to point at other binaries.
 
+On macOS the kit uses the full Chrome for Testing binary rather than Playwright's headless shell, because the shell has no GPU WebGL and every 3D page fails with "Could not create a WebGL context". `CHROMIUM` overrides the choice.
+
 ## The 3 examples
 
 Build one, open the HTML, press buttons. Copy the closest one when you start a new machine.
