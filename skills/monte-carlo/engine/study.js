@@ -21,6 +21,8 @@ const strongest = (cmp) => {
   for (const [id, m] of Object.entries(cmp.metrics ?? {})) {
     const e = m.paired;
     if (e && e.effect > best.effect) best = {metric: id, effect: e.effect, z: e.z, p: e.p, mean: e.mean};
+    const c = m.concentration;
+    if (c && Math.abs(c.z) > 3 && Math.abs(c.change) > best.effect) best = {metric: `${id} concentration`, effect: Math.abs(c.change), z: c.z, p: Math.min(1, 2 * normalSf(Math.abs(c.z))), mean: c.change};
   }
   return best;
 };
@@ -159,9 +161,15 @@ export async function study(pool, model, specIn, {onProgress, log = () => {}, wo
     if (!cats) return;
     const qs = benjaminiHochberg(rows.map((r) => r.outcome.p));
     const qm = benjaminiHochberg(rows.map((r) => r.outcome.largest.p));
+    const qp = benjaminiHochberg(rows.map((r) => r.outcome.paired?.p ?? 1));
+    const qt = benjaminiHochberg(rows.map((r) => r.outcome.paired?.top.pCorrected ?? 1));
     rows.forEach((r, i) => {
       r.outcome.q = qs[i];
       r.outcome.largest.q = qm[i];
+      if (r.outcome.paired) {
+        r.outcome.paired.q = qp[i];
+        r.outcome.paired.top.q = qt[i];
+      }
     });
   };
   for (const r of shortlist) {
@@ -244,9 +252,12 @@ export function reportStudy(model, res) {
     }
   }
   const table = (rows) => {
-    L.push('| Parameter | Delta | Reached | Outcome p | q | Largest category | Its ratio | Its q | Against null p |', '|---|---|---|---|---|---|---|---|---|');
-    for (const r of rows) L.push(`| ${r.parameter} | ${fn(r.delta)} ${r.unit ?? ''}${r.widths ? ` (${r.widths} widths)` : ''} | ${pct(1 - r.reach.identicalTrials)} | ${fp(r.outcome?.p)} | ${fp(r.outcome?.q)} | ${r.outcome?.largest?.category ?? '-'} | ${fn(r.outcome?.largest?.ratio)} | ${fp(r.outcome?.largest?.q)} | ${fp(r.vsNullP)} |`);
-    L.push('');
+    L.push('| Parameter | Delta | Reached | Moved outcome | Paired p | q | Most changed category | Gained / lost | Its q | Against null p |', '|---|---|---|---|---|---|---|---|---|---|');
+    for (const r of rows) {
+      const o = r.outcome?.paired;
+      L.push(`| ${r.parameter} | ${fn(r.delta)} ${r.unit ?? ''}${r.widths ? ` (${r.widths} widths)` : ''} | ${pct(1 - r.reach.identicalTrials)} | ${o ? pct(o.discordant / o.n) : '-'} | ${fp(o?.p)} | ${fp(o?.q)} | ${o?.top.category ?? '-'} | ${o ? `${o.top.gained} / ${o.top.lost}` : '-'} | ${fp(o?.top.q)} | ${fp(r.vsNullP)} |`);
+    }
+    L.push('', '**Paired** compares the arms launch by launch, so only trials the change moved count. **Moved outcome** is the share of trials that ended in a different category.', '');
   };
   const metricTable = (rows) => {
     const ids = (model.metrics ?? []).map((m) => m.id);

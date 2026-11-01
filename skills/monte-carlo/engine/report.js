@@ -31,7 +31,9 @@ const summaryBlock = (s) => {
 
 const comparisonLine = (c) => {
   const parts = [];
-  if (c.outcome) parts.push(`outcome distribution vs baseline p = ${fp(c.outcome.p)}`);
+  const o = c.outcome?.paired;
+  if (o) parts.push(`paired outcome p = ${fp(o.p)}, ${pct(o.discordant / o.n)} of trials changed number, most changed ${o.top.category} (gained ${o.top.gained}, lost ${o.top.lost}, corrected p ${fp(o.top.pCorrected)})`);
+  else if (c.outcome) parts.push(`outcome distribution vs baseline p = ${fp(c.outcome.p)}`);
   for (const [id, m] of Object.entries(c.metrics ?? {})) {
     parts.push(m.kind === 'circular' ? `${id} mean ${fn(m.meanShiftDeg)}° (p ${fp(m.p)})` : `${id} ${fn(m.diff)} (p ${fp(m.p)})`);
   }

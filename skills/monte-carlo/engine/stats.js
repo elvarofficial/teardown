@@ -76,6 +76,64 @@ export const chiSquareTwoSample = (a, b) => {
   return {x2, df, p: df > 0 ? gammaQ(df / 2, x2 / 2) : 1};
 };
 
+/** Two-sided exact binomial test of k successes in n at one half, the exact form of McNemar's test. */
+export const mcnemar = (b, c) => {
+  const n = b + c;
+  if (n === 0) return 1;
+  const k = Math.min(b, c);
+  let tail = 0;
+  for (let i = 0; i <= k; i++) tail += Math.exp(logGamma(n + 1) - logGamma(i + 1) - logGamma(n - i + 1) - n * Math.LN2);
+  return Math.min(1, 2 * tail);
+};
+
+/**
+ * Do two outcome columns on the same trials have the same marginal distribution? `pairs` is a square table, pairs[i][j]
+ * counting trials in category i in the first arm and j in the second. Only trials the change moved carry information, so
+ * this sees far smaller shifts than a two-sample test when few trials were reached, and a two-sample test on such arms is
+ * not valid at all: it assumes independence and returns p near 1. The global test is Stuart-Maxwell; each category also gets
+ * an exact McNemar test.
+ */
+export const pairedOutcome = (pairs) => {
+  const k = pairs.length;
+  const perCategory = [];
+  const d = new Array(k).fill(0);
+  const V = pairs.map(() => new Array(k).fill(0));
+  for (let i = 0; i < k; i++) {
+    let gained = 0;
+    let lost = 0;
+    for (let j = 0; j < k; j++) {
+      if (i === j) continue;
+      lost += pairs[i][j];
+      gained += pairs[j][i];
+      V[i][j] = -(pairs[i][j] + pairs[j][i]);
+    }
+    V[i][i] = gained + lost;
+    d[i] = gained - lost;
+    perCategory.push({index: i, gained, lost, p: mcnemar(gained, lost)});
+  }
+  // solve V x = d by elimination, skipping null pivots: V always has rank below k, and the rank is the degrees of freedom
+  const A = V.map((row, i) => [...row, d[i]]);
+  const used = [];
+  for (let col = 0, row = 0; col < k && row < k; col++) {
+    let best = row;
+    for (let r = row + 1; r < k; r++) if (Math.abs(A[r][col]) > Math.abs(A[best][col])) best = r;
+    if (Math.abs(A[best][col]) < 1e-9) continue;
+    [A[row], A[best]] = [A[best], A[row]];
+    for (let r = 0; r < k; r++) {
+      if (r === row) continue;
+      const f = A[r][col] / A[row][col];
+      if (f) for (let c = col; c <= k; c++) A[r][c] -= f * A[row][c];
+    }
+    used.push([row, col]);
+    row++;
+  }
+  let x2 = 0;
+  for (const [row, col] of used) x2 += (A[row][k] / A[row][col]) * d[col];
+  const df = used.length;
+  const discordant = perCategory.reduce((s, c) => s + c.gained, 0);
+  return {x2, df, p: df > 0 ? gammaQ(df / 2, Math.max(0, x2) / 2) : 1, discordant, perCategory};
+};
+
 /** Wilson score interval for a proportion. */
 export const wilson = (k, n, z = 1.96) => {
   if (n === 0) return [0, 1];

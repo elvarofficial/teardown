@@ -65,11 +65,12 @@ try {
     for (const s of list) {
       const run = await runScenario(pool, model, {...(spec.common ?? {}), ...s}, {onProgress});
       results.push({summary: summarize(model, run), comparison: baseline ? compare(model, baseline, run) : null});
+      // each case lands on disk as it finishes, as in a study
+      var payload = {model: model.name, baseline: baseline ? summarize(model, baseline) : null, results};
+      fs.writeFileSync(path.join(out, 'run.json'), JSON.stringify(payload, null, 1));
+      var md = reportRun(model, payload);
+      fs.writeFileSync(path.join(out, 'run.md'), md);
     }
-    const payload = {model: model.name, baseline: baseline ? summarize(model, baseline) : null, results};
-    fs.writeFileSync(path.join(out, 'run.json'), JSON.stringify(payload, null, 1));
-    const md = reportRun(model, payload);
-    fs.writeFileSync(path.join(out, 'run.md'), md);
     console.log(md);
   } else if (cmd === 'sweep') {
     const res = await sweep(pool, model, spec, {onProgress});

@@ -4,7 +4,7 @@ import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {Worker} from 'node:worker_threads';
 import {selectParameters, toleranceSd, validateModel} from './contract.js';
-import {angleDiff, benjaminiHochberg, chiSquareGof, chiSquareTwoSample, circular, ks, largestCategoryShift, mean, minDetectableShift, normalSf, quantile, stdev, welch, wilson} from './stats.js';
+import {angleDiff, benjaminiHochberg, chiSquareGof, chiSquareTwoSample, circular, ks, largestCategoryShift, mean, minDetectableShift, normalSf, pairedOutcome, quantile, stdev, welch, wilson} from './stats.js';
 
 const WORKER = path.join(path.dirname(fileURLToPath(import.meta.url)), 'worker.js');
 
@@ -198,7 +198,25 @@ function reach(run, base) {
   return {sameOutcome: n ? same / n : 0, identicalTrials: n ? identical / n : 0};
 }
 
-/** Does `run` differ from `base`? Outcome by a two-sample chi-square, each metric by the test that suits its kind. */
+/** The table of outcomes pair by pair, or null if the two runs are not on the same launches. Invalid trials drop out. */
+function outcomePairs(model, base, run) {
+  const same = (r) => r.scenario.inputSeed ?? r.scenario.seed;
+  if (same(base) !== same(run) || JSON.stringify(base.scenario.inputs) !== JSON.stringify(run.scenario.inputs) || base.outcome.length !== run.outcome.length || base.scenario.builds !== run.scenario.builds || run.scenario.sampleTolerances) return null;
+  const k = model.outcome.categories.length;
+  const pairs = Array.from({length: k}, () => new Array(k).fill(0));
+  let n = 0;
+  for (let i = 0; i < base.outcome.length; i++) {
+    if (base.outcome[i] < 0 || run.outcome[i] < 0) continue;
+    pairs[base.outcome[i]][run.outcome[i]]++;
+    n++;
+  }
+  return {pairs, n};
+}
+
+/**
+ * Does `run` differ from `base`? Outcome by a paired test when both ran the same launches and by a two-sample chi-square when
+ * they did not; each metric by the test that suits its kind.
+ */
 export function compare(model, base, run) {
   const out = {name: run.scenario.name, baseline: base.scenario.name};
   if (model.outcome) {
@@ -212,6 +230,19 @@ export function compare(model, base, run) {
     out.outcome = chiSquareTwoSample(ca, cb);
     const big = largestCategoryShift(ca, cb);
     out.outcome.largest = {...big, category: model.outcome.categories[big.index]};
+    const paired = outcomePairs(model, base, run);
+    if (paired) {
+      const t = pairedOutcome(paired.pairs);
+      const k = model.outcome.categories.length;
+      const top = t.perCategory.reduce((a, b) => (b.p < a.p ? b : a));
+      // the smallest net shift in one named category this much churn could show, 80% power, as a share of its own probability
+      out.outcome.paired = {
+        ...t,
+        n: paired.n,
+        top: {...top, category: model.outcome.categories[top.index], pCorrected: Math.min(1, top.p * k)},
+        perCategory: t.perCategory.map((c) => ({...c, category: model.outcome.categories[c.index], smallestShift: (2.8 * Math.sqrt(Math.max(c.gained + c.lost, 1))) / (paired.n / k)})),
+      };
+    }
   }
   out.reach = reach(run, base);
   out.metrics = {};
@@ -225,7 +256,9 @@ export function compare(model, base, run) {
       // compare the two distributions after unwrapping each around the pooled mean direction
       const centre = circular([...a, ...b]).meanDeg;
       const test = ks(a.map((v) => angleDiff(v, centre)), b.map((v) => angleDiff(v, centre)));
-      out.metrics[m.id] = {kind: 'circular', meanShiftDeg: angleDiff(ca.meanDeg, cb.meanDeg), rBar: ca.rBar, rBarBase: cb.rBar, ...test, paired: pairedMetric(run, base, j, 'circular')};
+      // a direction that was uniform and now is not moves no mean, so concentration is its own effect
+      const concentration = {change: ca.rBar - cb.rBar, z: (ca.rBar - cb.rBar) * Math.sqrt(Math.min(a.length, b.length))};
+      out.metrics[m.id] = {kind: 'circular', meanShiftDeg: angleDiff(ca.meanDeg, cb.meanDeg), rBar: ca.rBar, rBarBase: cb.rBar, concentration, ...test, paired: pairedMetric(run, base, j, 'circular')};
     } else {
       const w = welch(a, b);
       const test = ks(a, b);

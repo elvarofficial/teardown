@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {resolveParameters, validateModel} from './contract.js';
 import {createRng, draw} from './rng.js';
 import {compare, loadModel, Pool, runScenario, summarize, sweep} from './runner.js';
-import {benjaminiHochberg, chiSquareCritical, chiSquareGof, chiSquareLambda, chiSquarePower, chiSquareTwoSample, circular, gammaQ, ks, largestCategoryShift, shiftForTrials, trialsForShift, wilson} from './stats.js';
+import {benjaminiHochberg, chiSquareCritical, chiSquareGof, chiSquareLambda, chiSquarePower, chiSquareTwoSample, circular, gammaQ, ks, largestCategoryShift, shiftForTrials, trialsForShift, wilson, pairedOutcome} from './stats.js';
 import {reportStudy, study} from './study.js';
 
 const DIE = path.join(path.dirname(fileURLToPath(import.meta.url)), '../examples/loaded-die.model.js');
@@ -132,4 +132,32 @@ test('end to end on the loaded die: fair passes, loaded is caught, runs are repr
   } finally {
     await pool.close();
   }
+});
+
+test('the paired outcome test is calibrated, and sees a shift the two-sample test cannot', () => {
+  const rng = createRng(5, 'paired');
+  const k = 37;
+  const pick = () => Math.floor(rng() * k);
+  const table = (reach, toZero) => {
+    const pairs = Array.from({length: k}, () => new Array(k).fill(0));
+    const a = new Array(k).fill(0);
+    const b = new Array(k).fill(0);
+    for (let i = 0; i < 20000; i++) {
+      const x = pick();
+      const y = rng() < reach ? (rng() < toZero ? 0 : pick()) : x;
+      pairs[x][y]++;
+      a[x]++;
+      b[y]++;
+    }
+    return {pairs, a, b};
+  };
+  // no net change, trials reshuffled: p should be uniform
+  const ps = Array.from({length: 200}, () => pairedOutcome(table(0.05, 0).pairs).p);
+  const low = ps.filter((p) => p < 0.05).length / ps.length;
+  assert.ok(low < 0.12, `false positive rate ${low}`);
+  // a tenth of the reached trials go to one category: 100 trials, a 18% shift in it
+  const t = table(0.05, 0.1);
+  const paired = pairedOutcome(t.pairs);
+  assert.ok(paired.perCategory[0].p < 1e-6, `category p ${paired.perCategory[0].p}`);
+  assert.equal(pairedOutcome(Array.from({length: k}, (_, i) => Array.from({length: k}, (_, j) => (i === j ? 5 : 0)))).p, 1);
 });
