@@ -1,11 +1,13 @@
 // Replicates the rotor wobble result on fresh launches: the bias should flip with the wobble's sign. Run from the repo root.
+// node check-wobble.mjs [trials] [seed] [wobbles in deg, comma-separated] [out dir]
 import fs from 'node:fs';
 import {compare, loadModel, Pool, runScenario} from '../../skills/monte-carlo/engine/runner.js';
 import {SEQUENCE} from './spec.js';
 
 const TRIALS = Number(process.argv[2] ?? 30000);
 const SEED = Number(process.argv[3] ?? 22);
-const OUT = 'montecarlo-out/roulette/wobble';
+const DELTAS = (process.argv[4] ?? '0.3,-0.3').split(',').map(Number);
+const OUT = process.argv[5] ?? 'montecarlo-out/roulette/wobble';
 
 const {abs, model} = await loadModel('sims/roulette-shared/model.js');
 const pool = new Pool(abs);
@@ -30,7 +32,7 @@ function harmonic(base, run, h) {
 const arm = (name, delta) => runScenario(pool, model, {name, trials: TRIALS, seed: SEED, deltas: delta ? {'rotor.wobbleCos': delta} : {}}, {onProgress: (d, t) => { if (d % 3000 === 0) console.error(name, d, '/', t); }});
 const base = await arm('level rotor');
 const report = {trials: TRIALS, seed: SEED, arms: []};
-for (const delta of [0.3, -0.3]) {
+for (const delta of DELTAS) {
   const run = await arm(`wobble ${delta}`, delta);
   const paired = compare(model, base, run).outcome.paired;
   report.arms.push({delta, p: paired.p, x2: paired.x2, df: paired.df, discordant: paired.discordant, top: paired.top, harmonics: [1, 2, 3, 4, 5].map((h) => harmonic(base, run, h))});
