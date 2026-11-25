@@ -22,7 +22,24 @@ Then, once, in the installed folder:
 npm install && npx playwright install chromium
 ```
 
-You need Node.js 20 or newer. For the video you also need `ffmpeg`, and for the sound Python 3.
+On Linux, use `npx playwright install --with-deps chromium` instead: it also installs the system libraries Chromium needs (it asks for sudo).
+
+You need Node.js 20 or newer. For the video you also need `ffmpeg` on PATH, and for the sound Python 3 (standard library only):
+
+| | ffmpeg | Python 3 |
+|---|---|---|
+| Windows | `winget install Gyan.FFmpeg`, then open a new terminal | `winget install Python.Python.3.13`, run as `python` |
+| macOS | `brew install ffmpeg` | preinstalled or `brew install python`, run as `python3` |
+| Linux | `sudo apt install ffmpeg` | preinstalled, run as `python3` |
+
+Check it end to end with a first render (a still from the V8 film, no ffmpeg needed):
+
+```
+node sims/build.mjs v8-film
+node sims/capture.mjs v8-film --size 1600x900 --dpr 1.2 --still 2.5
+```
+
+The first line it prints is the GPU it got. A `SwiftShader` or `llvmpipe` line means the frames are rendered on the CPU: still correct, just slow. On Linux, `TEARDOWN_ANGLE=vulkan` tries Vulkan instead of the default OpenGL, `TEARDOWN_ANGLE=off` restores Chromium's own choice. When no GPU path gives WebGL at all (a VM, a machine without a GPU), capture switches to the CPU renderer by itself.
 
 ## Use
 

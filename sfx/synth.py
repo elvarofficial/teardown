@@ -14,7 +14,8 @@ import random
 import subprocess
 
 SR = 48000
-FFMPEG = r"C:\Users\user_\.claude\bin\ffmpeg.exe"
+# Like paths.mjs and sims/beats.py: ffmpeg on PATH, or set FFMPEG to the binary.
+FFMPEG = os.environ.get("FFMPEG", "ffmpeg")
 SAMPLES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "samples")
 
 
@@ -25,7 +26,10 @@ def sample(name, start=0.0, dur=None):
     if dur is not None:
         cmd += ["-t", str(dur)]
     cmd += ["-ac", "1", "-ar", str(SR), "-f", "s16le", "-"]
-    raw = subprocess.run(cmd, check=True, capture_output=True).stdout
+    try:
+        raw = subprocess.run(cmd, check=True, capture_output=True).stdout
+    except FileNotFoundError:
+        raise SystemExit(f"sample() needs ffmpeg: {FFMPEG!r} was not found. Install ffmpeg, or set FFMPEG to its path.") from None
     pcm = array.array("h")
     pcm.frombytes(raw[: len(raw) // 2 * 2])
     return [x / 32768 for x in pcm]

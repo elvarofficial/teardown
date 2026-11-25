@@ -21,7 +21,7 @@ import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
-import {CHROMIUM, CHROMIUM_ARGS, DIST, FFMPEG, OUT, PYTHON, playwright} from '../paths.mjs';
+import {CHROMIUM, CHROMIUM_ARGS, DIST, FFMPEG, OUT, PYTHON, SOFTWARE_ARGS, playwright, requireTool} from '../paths.mjs';
 
 const {chromium} = playwright();
 
@@ -66,12 +66,29 @@ const stamp = new Date().toISOString().slice(5, 16).replace(/[-:T]/g, '');
 const out = path.resolve(opt('out', path.join(OUT, still ? `${label}-${still}.png` : `${label}-${stamp}.mp4`)));
 fs.mkdirSync(path.dirname(out), {recursive: true});
 
-// Browser and GPU flags come from ../paths.mjs.
+// ffmpeg encodes the video and tiles the review sheets; a single --still needs only the browser.
+if (still === undefined) requireTool(FFMPEG, 'FFMPEG');
+
+// Browser and GPU flags come from ../paths.mjs. If the GPU flags give no WebGL context (a VM, a machine without a
+// GPU, a driver ANGLE can't use), fall back to the CPU renderer instead of timing out on a page that can't draw.
 const exe = CHROMIUM;
-const browser = await chromium.launch({
-  executablePath: exe,
-  args: CHROMIUM_ARGS,
-});
+const hasWebGL = async (b) => {
+  const p = await b.newPage();
+  const ok = await p.evaluate(() => !!document.createElement('canvas').getContext('webgl2'));
+  await p.close();
+  return ok;
+};
+let browser = await chromium.launch({executablePath: exe, args: CHROMIUM_ARGS});
+if (!(await hasWebGL(browser))) {
+  await browser.close();
+  console.warn('no WebGL from the GPU flags in paths.mjs; rendering on the CPU (SwiftShader) instead, which is much slower');
+  browser = await chromium.launch({executablePath: exe, args: SOFTWARE_ARGS});
+  if (!(await hasWebGL(browser))) {
+    console.error('this Chromium gives no WebGL context even on the CPU renderer. Reinstall it with: npx playwright install chromium' +
+      (process.platform === 'linux' ? ' --with-deps' : ''));
+    process.exit(1);
+  }
+}
 const dpr = Number(opt('dpr', 4 / 3));
 const page = await browser.newPage({viewport: {width: W, height: H}, deviceScaleFactor: dpr});
 page.on('console', (m) => m.type() === 'error' && console.error('[page]', m.text()));
@@ -97,6 +114,10 @@ const info = await page.evaluate((seek) => {
   };
 }, SEEK);
 console.log(`gpu: ${info.gpu}`);
+if (/swiftshader|llvmpipe|softpipe/i.test(info.gpu)) {
+  console.warn('  software renderer: frames are correct but slow. With a GPU, see the GPU flags in paths.mjs' +
+    (process.platform === 'linux' ? ' (TEARDOWN_ANGLE=gl|vulkan|off)' : '') + '.');
+}
 // One entry point for both contracts: a sim's SIM.render(t) or a page's seek(t).
 const draw = (t) => page.evaluate(([x, seek]) => (seek ? window.seek(x) : window.SIM.render(x)), [t, SEEK]);
 const end = Number(opt('to', info.duration));
@@ -181,7 +202,9 @@ const silent = music ? out.replace(/\.mp4$/, '-silent.mp4') : out;
 const ff = spawn(
   FFMPEG,
   ['-loglevel', 'error', '-y', '-f', 'image2pipe', '-framerate', String(fps), '-i', '-',
-    '-c:v', 'libx264', '-preset', 'slow', '-crf', String(opt('crf', 16)), '-pix_fmt', 'yuv420p', '-movflags', '+faststart', silent],
+    '-c:v', 'libx264', '-preset', 'slow', '-crf', String(opt('crf', 16)),
+    // JPEG frames are full range; without out_range=tv newer ffmpeg writes yuvj420p (color_range=pc), not yuv420p.
+    '-vf', 'scale=out_range=tv', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', silent],
   {stdio: ['pipe', 'inherit', 'inherit']},
 );
 const t0 = Date.now();
