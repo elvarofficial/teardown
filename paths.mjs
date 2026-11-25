@@ -38,7 +38,17 @@ export const SOFTWARE_ARGS = ['--use-angle=swiftshader', '--enable-unsafe-swifts
 export const OUT = path.resolve(process.env.TEARDOWN_OUT || 'teardown-out');
 export const DIST = path.join(OUT, 'dist');
 
-export const fromDeps = (id) => createRequire(path.join(DEPS, 'x.js'))(id);
+// A missing package means `npm install` never ran in this folder (or ran somewhere else): say where to run it.
+export const fromDeps = (id) => {
+  try {
+    return createRequire(path.join(DEPS, 'x.js'))(id);
+  } catch (e) {
+    if (e.code !== 'MODULE_NOT_FOUND' || !e.message.includes(`'${id}'`)) throw e;
+    console.error(`${id} is not installed in ${DEPS}. Run these once in ${path.dirname(DEPS)}:\n  npm install\n` +
+      `  npx playwright install ${process.platform === 'linux' ? '--with-deps ' : ''}chromium`);
+    process.exit(1);
+  }
+};
 export const playwright = () => fromDeps('playwright');
 
 // Stop with an install hint instead of a spawn ENOENT stack trace when ffmpeg or ffprobe is missing.
@@ -49,7 +59,10 @@ const INSTALL_FFMPEG = {
 };
 export const requireTool = (bin, envVar) => {
   if (!spawnSync(bin, ['-version'], {stdio: 'ignore'}).error) return;
+  const example = process.platform === 'win32'
+    ? `$env:${envVar} = "C:\\path\\to\\${path.basename(bin, '.exe')}.exe"   (PowerShell)`
+    : `export ${envVar}=/path/to/${path.basename(bin)}`;
   console.error(`${bin} not found. Install ffmpeg (ffprobe comes with it):\n  ${INSTALL_FFMPEG[process.platform] || 'https://ffmpeg.org/download.html'}\n` +
-    `or point ${envVar} at the binary, e.g. ${envVar}=/path/to/${path.basename(bin)}`);
+    `or point ${envVar} at the binary:\n  ${example}`);
   process.exit(1);
 };

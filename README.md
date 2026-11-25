@@ -12,23 +12,27 @@ Ask how something works. Claude builds it as one offline HTML page: the machine 
 
 ## Install
 
+You need Node.js 22.20 or newer. On Node 20 the installer stops with `does not provide an export named 'glob'`.
+
 ```
 npx skills add elvarofficial/teardown -g -a claude-code
 ```
 
-Then, once, in the installed folder:
+Then, once, in the folder it installed to. The same lines work in PowerShell, bash and zsh (in cmd.exe, `cd %USERPROFILE%\.claude\skills\teardown`):
 
 ```
-npm install && npx playwright install chromium
+cd ~/.claude/skills/teardown
+npm install
+npx playwright install chromium
 ```
 
 On Linux, use `npx playwright install --with-deps chromium` instead: it also installs the system libraries Chromium needs (it asks for sudo).
 
-You need Node.js 20 or newer. For the video you also need `ffmpeg` on PATH, and for the sound Python 3 (standard library only):
+For the video you also need `ffmpeg` on PATH, and for the sound Python 3 (standard library only):
 
 | | ffmpeg | Python 3 |
 |---|---|---|
-| Windows | `winget install Gyan.FFmpeg`, then open a new terminal | `winget install Python.Python.3.13`, run as `python` |
+| Windows | `winget install Gyan.FFmpeg`, then open a new terminal | `winget install Python.Python.3.13`, then open a new terminal, run as `python` |
 | macOS | `brew install ffmpeg` | preinstalled or `brew install python`, run as `python3` |
 | Linux | `sudo apt install ffmpeg` | preinstalled, run as `python3` |
 
