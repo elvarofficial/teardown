@@ -15,7 +15,7 @@ One machine, one page. The visitor sees the thing run, presses a button, and the
 cd "$SKILL_DIR" && npm install && npx playwright install chromium
 ```
 
-The pages need nothing else. The video needs `ffmpeg` on PATH and the score needs Python 3 (standard library only). Set `FFMPEG`, `PYTHON` or `CHROMIUM` to point at other binaries.
+On Linux add `--with-deps` to the playwright install (system libraries; asks for sudo). The pages need nothing else. The video needs `ffmpeg` on PATH and the score needs Python 3 (standard library only): `python` on Windows, `python3` on macOS and Linux, in the commands below too. Set `FFMPEG`, `PYTHON` or `CHROMIUM` to point at other binaries. A missing ffmpeg stops with the install command for the OS.
 
 ## The 3 examples
 
@@ -96,7 +96,7 @@ ffmpeg -y -i teardown-out/v8-silent.mp4 -i teardown-out/v8-score.wav -map 0:v -m
 node "$SKILL_DIR/wave.mjs" teardown-out/v8.mp4 --timeline "$SKILL_DIR/sims/v8-film/timeline.json"
 ```
 
-`--size` is the CSS layout and `--dpr` multiplies it: 1600 x 900 at 1.2 gives 1920 x 1080. Capture prints the GPU it got; a software renderer means the GPU flags in `paths.mjs` did not take.
+`--size` is the CSS layout and `--dpr` multiplies it: 1600 x 900 at 1.2 gives 1920 x 1080. Capture prints the GPU it got; a software renderer (SwiftShader, llvmpipe) means the GPU flags in `paths.mjs` did not take. Frames are still correct, only slower. On Linux try `TEARDOWN_ANGLE=vulkan` (default `gl`, `off` for Chromium's own choice). With no WebGL from the GPU flags at all, capture falls back to the CPU renderer by itself and says so.
 
 ## Review loop
 

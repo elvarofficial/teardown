@@ -12,7 +12,10 @@
 import {execFileSync} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import {FFMPEG, FFPROBE} from './paths.mjs';
+import {FFMPEG, FFPROBE, requireTool} from './paths.mjs';
+
+requireTool(FFMPEG, 'FFMPEG');
+requireTool(FFPROBE, 'FFPROBE');
 
 const argv = process.argv.slice(2);
 const opt = (name, fallback) => {
