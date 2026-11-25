@@ -44,8 +44,12 @@ export const fromDeps = (id) => {
     return createRequire(path.join(DEPS, 'x.js'))(id);
   } catch (e) {
     if (e.code !== 'MODULE_NOT_FOUND' || !e.message.includes(`'${id}'`)) throw e;
-    console.error(`${id} is not installed in ${DEPS}. Run these once in ${path.dirname(DEPS)}:\n  npm install\n` +
-      `  npx playwright install ${process.platform === 'linux' ? '--with-deps ' : ''}chromium`);
+    if (process.env.TEARDOWN_DEPS) {
+      console.error(`${id} is not in TEARDOWN_DEPS=${DEPS}. Point it at a node_modules folder that has it, or unset it.`);
+    } else {
+      console.error(`${id} is not installed in ${DEPS}. Run these once in ${path.dirname(DEPS)}:\n  npm install\n` +
+        `  npx playwright install ${process.platform === 'linux' ? '--with-deps ' : ''}chromium`);
+    }
     process.exit(1);
   }
 };
@@ -59,6 +63,10 @@ const INSTALL_FFMPEG = {
 };
 export const requireTool = (bin, envVar) => {
   if (!spawnSync(bin, ['-version'], {stdio: 'ignore'}).error) return;
+  if (process.env[envVar]) {
+    console.error(`${envVar} is set to ${process.env[envVar]}, which doesn't run. Point it at the ${envVar.toLowerCase()} binary, or unset it to use the one on PATH.`);
+    process.exit(1);
+  }
   const example = process.platform === 'win32'
     ? `$env:${envVar} = "C:\\path\\to\\${path.basename(bin, '.exe')}.exe"   (PowerShell)`
     : `export ${envVar}=/path/to/${path.basename(bin)}`;

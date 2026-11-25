@@ -12,7 +12,7 @@ Ask how something works. Claude builds it as one offline HTML page: the machine 
 
 ## Install
 
-You need Node.js 22.20 or newer. On Node 20 the installer stops with `does not provide an export named 'glob'`.
+You need Node.js 22 or newer. On Node 20 the installer stops with `does not provide an export named 'glob'`.
 
 ```
 npx skills add elvarofficial/teardown -g -a claude-code
@@ -23,10 +23,19 @@ Then, once, in the folder it installed to. The same lines work in PowerShell, ba
 ```
 cd ~/.claude/skills/teardown
 npm install
+```
+
+Next, on Windows and macOS:
+
+```
 npx playwright install chromium
 ```
 
-On Linux, use `npx playwright install --with-deps chromium` instead: it also installs the system libraries Chromium needs (it asks for sudo).
+On Linux, which also needs Chromium's system libraries (it asks for sudo):
+
+```
+npx playwright install --with-deps chromium
+```
 
 For the video you also need `ffmpeg` on PATH, and for the sound Python 3 (standard library only):
 
