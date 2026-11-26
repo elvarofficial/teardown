@@ -2,7 +2,7 @@
 // crank: turn the crank and every joint follows by circle intersection, no IK, no springs. The foot traces the
 // classic path: a flat bottom for ~155° of crank, then a 22-unit lift back. Units are Jansen's own (≈ cm).
 export const HOLY = {a: 38, b: 41.5, c: 39.3, d: 40.1, e: 55.8, f: 39.4, g: 36.7, h: 65.7, i: 49, j: 50, k: 61.9, l: 7.8, m: 15};
-const {a, b, c, d, e, f, g, h, i, j, k, l, m} = HOLY;
+const {a, l} = HOLY;
 export const PIVOT = [-a, -l];
 
 // the two points at distance r0 from p0 and r1 from p1; pick chooses one
@@ -20,16 +20,19 @@ const hiY = (s, t) => (s[1] > t[1] ? s : t);
 const loY = (s, t) => (s[1] < t[1] ? s : t);
 const loX = (s, t) => (s[0] < t[0] ? s : t);
 
-/** Every joint of one leg for crank angle th (radians), crank axle at the origin, foot toward -x. */
-export function solveLeg(th) {
-  const A = [m * Math.cos(th), m * Math.sin(th)];
-  const B = cc(A, j, PIVOT, b, hiY);
-  const C = cc(A, k, PIVOT, c, loY);
-  const D = cc(B, e, PIVOT, d, loX);
-  const E = cc(D, f, C, g, loX);
-  const F = cc(E, h, C, i, loY);
-  return {O: [0, 0], P: PIVOT, A, B, C, D, E, F};
+/** Every joint of one leg for crank angle th with these link lengths: as built, if the lengths are. */
+export function solveLegWith(L, th) {
+  const P = [-L.a, -L.l];
+  const A = [L.m * Math.cos(th), L.m * Math.sin(th)];
+  const B = cc(A, L.j, P, L.b, hiY);
+  const C = cc(A, L.k, P, L.c, loY);
+  const D = cc(B, L.e, P, L.d, loX);
+  const E = cc(D, L.f, C, L.g, loX);
+  const F = cc(E, L.h, C, L.i, loY);
+  return {O: [0, 0], P, A, B, C, D, E, F};
 }
+/** Every joint of one leg for crank angle th (radians), crank axle at the origin, foot toward -x. */
+export const solveLeg = (th) => solveLegWith(HOLY, th);
 /** The mirrored leg on the same crank pin: foot toward +x, pushing the same way. */
 export function solveMirror(th) {
   const s = solveLeg(Math.PI - th);

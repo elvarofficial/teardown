@@ -42,11 +42,30 @@ node sims/build.mjs cessna-live
 node sims/build.mjs strandbeest-live
 ```
 
+## Monte Carlo on any machine
+
+This fork adds a model-agnostic Monte Carlo engine and a first machine built for it: a 37-pocket roulette wheel, with its ball simulated from Newton's and Euler's equations, a full bill of materials, and all 250+ as-built tolerances starting at zero.
+
+```bash
+node sims/build.mjs roulette-live
+```
+
+```bash
+open teardown-out/dist/roulette-live.html
+```
+
+Press T, then flick the ball along the track. Choose a ball, set any tolerance by element, and run a batch on that build. Results and how to read them: [docs/roulette-results.md](docs/roulette-results.md).
+
+Add it to a machine you already built: [skills/monte-carlo/docs/ADDING-TO-A-MODEL.md](skills/monte-carlo/docs/ADDING-TO-A-MODEL.md). Choose trial counts for your model: [skills/monte-carlo/docs/TUNING.md](skills/monte-carlo/docs/TUNING.md).
+
 ## What is inside
 
 | | |
 |---|---|
 | `SKILL.md` | What Claude reads: how a machine is built, the rules that make it look right, the review loop. |
+| `skills/monte-carlo/` | The Monte Carlo skill: engine, unit tools, docs. No dependencies, works without the rest of this repo. |
+| `sims/roulette-*` | The roulette wheel: physics, spec and stackup, BoM, coefficient library, tests, the page. |
+| `prompts.md` | The prompts this work was built from. |
 | `sims/kit/` | Runtime, stage, shader warm-up. |
 | `sims/v8-*`, `sims/cessna-*`, `sims/strandbeest-*` | 3 complete machines. `-shared` is the machine, `-live` the page you drive, `-film` the recorded tour. |
 | `sims/build.mjs` | Bundles a machine into one HTML file, three.js and fonts inlined. |

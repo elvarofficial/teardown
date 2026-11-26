@@ -1,0 +1,12 @@
+{
+  "baseline": {"name": "As designed, PTFE", "trials": 100000, "seed": 41},
+  "common": {"trials": 100000, "seed": 41},
+  "scenarios": [
+    {"name": "Fret restitution -9%, 3 widths (next to 17)", "deltas": {"fret.17.cor": -9}},
+    {"name": "Fret restitution +9%, 3 widths (next to 17)", "deltas": {"fret.17.cor": 9}},
+    {"name": "Fret moved 0.09 deg, 3 widths (next to 17)", "deltas": {"fret.17.angle": 0.09}},
+    {"name": "Fret moved -0.09 deg, 3 widths (next to 17)", "deltas": {"fret.17.angle": -0.09}},
+    {"name": "Fret 0.3 mm high, 3 widths (next to 17)", "deltas": {"fret.17.height": 0.3}},
+    {"name": "Pocket floor restitution -9%, 3 widths (17)", "deltas": {"pocket.17.cor": -9}}
+  ]
+}

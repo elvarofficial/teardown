@@ -1,0 +1,9 @@
+{
+  "name": "monte-carlo-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Model-agnostic Monte Carlo runner for physical models. No dependencies.",
+  "license": "MIT",
+  "scripts": {"test": "node --test engine/engine.test.js"}
+}

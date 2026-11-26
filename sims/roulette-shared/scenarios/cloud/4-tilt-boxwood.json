@@ -1,0 +1,21 @@
+{
+  "baseline": {
+    "name": "Boxwood, level",
+    "trials": 20000,
+    "seed": 43,
+    "presets": "ball.boxwood"
+  },
+  "common": {
+    "trials": 20000,
+    "seed": 43,
+    "presets": "ball.boxwood"
+  },
+  "scenarios": [
+    {
+      "name": "Boxwood, tilted 0.2 deg",
+      "deltas": {
+        "table.tiltX": 0.2
+      }
+    }
+  ]
+}

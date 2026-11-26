@@ -1,0 +1,13 @@
+{
+  "baseline": {"name": "As designed, PTFE", "trials": 30000, "seed": 21},
+  "common": {"trials": 30000, "seed": 21},
+  "scenarios": [
+    {"name": "One fret 0.3 mm high, 3 tolerance widths (next to 17)", "deltas": {"fret.17.height": 0.3}},
+    {"name": "One fret 1.5 mm high (next to 17)", "deltas": {"fret.17.height": 1.5}},
+    {"name": "One fret loose, -40% restitution (next to 17)", "deltas": {"fret.17.cor": -40}},
+    {"name": "One fret shifted 0.5 deg (next to 17)", "deltas": {"fret.17.angle": 0.5}},
+    {"name": "One pocket floor soft, -50% restitution (17)", "deltas": {"pocket.17.cor": -50}},
+    {"name": "One pocket 2 mm deep (17)", "deltas": {"pocket.17.depth": 2}},
+    {"name": "Rotor wobble 0.3 deg", "deltas": {"rotor.wobbleCos": 0.3}}
+  ]
+}
